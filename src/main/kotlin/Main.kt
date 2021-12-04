@@ -1,12 +1,9 @@
-import solutions.Day
-import solutions.Day01
-import solutions.Day02
-import solutions.Day03
+import solutions.*
 import java.io.BufferedReader
 import java.io.File
 
 fun main() {
-    runDay(3)
+    runDay(4)
     testAll()
 }
 
@@ -36,6 +33,10 @@ private fun testAll() {
         require(solvePart1() == 3912944)
         require(solvePart2() == 4996233)
     }
+    Day04(getDayInputFile(4)!!.bufferedReader()).run {
+        require(solvePart1() == 2496)
+        require(solvePart2() == 25925)
+    }
 }
 
 private fun getDayInputFile(day: Int): File? {
@@ -49,6 +50,7 @@ private fun createDay(day: Int, input: BufferedReader): Day<*, *> {
         1 -> Day01(input)
         2 -> Day02(input)
         3 -> Day03(input)
+        4 -> Day04(input)
         else -> error("Day $day not yet implemented")
     }
 }
