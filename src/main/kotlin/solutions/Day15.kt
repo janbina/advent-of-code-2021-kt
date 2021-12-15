@@ -8,7 +8,7 @@ class Day15(
     inputReader: BufferedReader,
 ): Day<Int, Int>() {
 
-    private val input: Map<Point2D, Int> by lazy {
+    private val input: CaveMap by lazy {
         val map = mutableMapOf<Point2D, Int>()
 
         inputReader.useLines { lines ->
@@ -19,22 +19,23 @@ class Day15(
             }
         }
 
-        map
+        CaveMap(map)
     }
 
     override fun solvePart1(): Int {
-        val riskMap = input
-        val start = Point2D(x = 0, y = 0)
-        val end = Point2D(
-            x = riskMap.keys.maxOf { it.x },
-            y = riskMap.keys.maxOf { it.y },
-        )
+        val caveMap = input
+        val start = caveMap.topLeft
+        val end = caveMap.bottomRight
 
-        return findLowestRiskPath(riskMap, start, end)
+        return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 1) }
     }
 
     override fun solvePart2(): Int {
-        return 0
+        val caveMap = input
+        val start = caveMap.topLeft
+        val end = caveMap.bottomRight
+
+        return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 5) }
     }
 
     /**
@@ -42,9 +43,9 @@ class Day15(
      * and @returns that risk.
      */
     private fun findLowestRiskPath(
-        riskMap: Map<Point2D, Int>,
         start: Point2D,
         end: Point2D,
+        riskForPoint: (Point2D) -> Int?,
     ): Int {
         val queue = PriorityQueue<QueueEntry>(compareBy({ -(it.point.x + it.point.y) }, { it.risk }))
         val visited = mutableMapOf<Point2D, Int>()
@@ -56,7 +57,7 @@ class Day15(
             val top = queue.poll()
             if (top.risk >= lowestPossibleRisk) continue
             val next = top.point.neighbors().mapNotNull { point ->
-                riskMap[point]?.let { pointRisk ->
+                riskForPoint(point)?.let { pointRisk ->
                     QueueEntry(point, top.risk + pointRisk)
                 }
             }
@@ -78,8 +79,23 @@ class Day15(
         return lowestPossibleRisk
     }
 
-    data class QueueEntry(
+    private data class QueueEntry(
         val point: Point2D,
         val risk: Int,
     )
+
+    private class CaveMap(
+        private val risks: Map<Point2D, Int>,
+    ) {
+        val minX = 0
+        val minY = 0
+        val maxX = risks.keys.maxOf { it.x }
+        val maxY = risks.keys.maxOf { it.y }
+        val topLeft = Point2D(minX, minY)
+        val bottomRight = Point2D(maxX, maxY)
+
+        fun riskForPoint(point: Point2D, mapDuplication: Int = 1): Int? {
+            return risks[point]
+        }
+    }
 }
