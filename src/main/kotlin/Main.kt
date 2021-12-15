@@ -3,7 +3,7 @@ import java.io.BufferedReader
 import java.io.File
 
 fun main() {
-    runDay(14)
+    runDay(15)
     testAll()
 }
 
@@ -77,6 +77,10 @@ private fun testAll() {
         require(solvePart1() == 3831L)
         require(solvePart2() == 5_725_739_914_282L)
     }
+    Day15(getDayInputFile(15)!!.bufferedReader()).run {
+        require(solvePart1() == 604)
+        require(solvePart2() == 0)
+    }
 }
 
 private fun getDayInputFile(day: Int): File? {
@@ -101,6 +105,7 @@ private fun createDay(day: Int, input: BufferedReader): Day<*, *> {
         12 -> Day12(input)
         13 -> Day13(input)
         14 -> Day14(input)
+        15 -> Day15(input)
         else -> error("Day $day not yet implemented")
     }
 }
