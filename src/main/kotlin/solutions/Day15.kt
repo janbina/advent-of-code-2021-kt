@@ -6,7 +6,7 @@ import java.util.*
 
 class Day15(
     inputReader: BufferedReader,
-): Day<Int, Int>() {
+) : Day<Int, Int>() {
 
     private val input: CaveMap by lazy {
         val map = mutableMapOf<Point2D, Int>()
@@ -19,28 +19,33 @@ class Day15(
             }
         }
 
-        CaveMap(map)
+        val width = map.keys.maxOf { it.x } + 1
+        val height = map.keys.maxOf { it.y } + 1
+
+        CaveMap(map, width, height)
     }
 
     override fun solvePart1(): Int {
         val caveMap = input
-        val start = caveMap.topLeft
-        val end = caveMap.bottomRight
+        val start = Point2D(0, 0)
+        val end = Point2D(caveMap.width - 1, caveMap.height - 1)
 
         return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 1) }
     }
 
     override fun solvePart2(): Int {
         val caveMap = input
-        val start = caveMap.topLeft
-        val end = caveMap.bottomRight
+        val start = Point2D(0, 0)
+        val end = Point2D(caveMap.width * 5 - 1, caveMap.height * 5 - 1)
 
         return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 5) }
     }
 
     /**
-     * Finds path from [start] to [end] in [riskMap] with the lowest possible risk
-     * and @returns that risk.
+     * Finds path from [start] to [end] with the lowest possible risk.
+     * Risk for each point of the path is provided by the [riskForPoint] function,
+     * which return integer value of the risk or null if it's not possible to move to that point at all.
+     * @returns the lowest risk of moving from [start] to [end]
      */
     private fun findLowestRiskPath(
         start: Point2D,
@@ -86,16 +91,23 @@ class Day15(
 
     private class CaveMap(
         private val risks: Map<Point2D, Int>,
+        val width: Int,
+        val height: Int,
     ) {
-        val minX = 0
-        val minY = 0
-        val maxX = risks.keys.maxOf { it.x }
-        val maxY = risks.keys.maxOf { it.y }
-        val topLeft = Point2D(minX, minY)
-        val bottomRight = Point2D(maxX, maxY)
 
         fun riskForPoint(point: Point2D, mapDuplication: Int = 1): Int? {
-            return risks[point]
+            val origX = point.x % width
+            val origY = point.y % height
+            val duplicationX = point.x / width
+            val duplicationY = point.y / height
+
+            if (duplicationX >= mapDuplication || duplicationY >= mapDuplication) {
+                return null
+            }
+
+            val baseRisk = risks[Point2D(origX, origY)] ?: return null
+
+            return (baseRisk + duplicationX + duplicationY - 1) % 9 + 1
         }
     }
 }
