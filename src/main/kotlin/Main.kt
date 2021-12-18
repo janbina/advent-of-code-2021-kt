@@ -1,9 +1,14 @@
 import solutions.*
 import java.io.BufferedReader
 import java.io.File
+import kotlin.system.measureTimeMillis
 
 fun main() {
-    runDay(15)
+    measureTimeMillis {
+        runDay(18)
+    }.also {
+        println("Time taken: $it")
+    }
     testAll()
 }
 
@@ -79,7 +84,19 @@ private fun testAll() {
     }
     Day15(getDayInputFile(15)!!.bufferedReader()).run {
         require(solvePart1() == 604)
-        require(solvePart2() == 0)
+        require(solvePart2() == 2907)
+    }
+    Day16(getDayInputFile(16)!!.bufferedReader()).run {
+        require(solvePart1() == 877)
+        require(solvePart2() == 194_435_634_456L)
+    }
+    Day17(getDayInputFile(17)!!.bufferedReader()).run {
+        require(solvePart1() == 6441)
+        require(solvePart2() == 3186)
+    }
+    Day18(getDayInputFile(18)!!.bufferedReader()).run {
+        require(solvePart1() == 4235)
+        require(solvePart2() == 4659)
     }
 }
 
@@ -106,6 +123,9 @@ private fun createDay(day: Int, input: BufferedReader): Day<*, *> {
         13 -> Day13(input)
         14 -> Day14(input)
         15 -> Day15(input)
+        16 -> Day16(input)
+        17 -> Day17(input)
+        18 -> Day18(input)
         else -> error("Day $day not yet implemented")
     }
 }

@@ -8,6 +8,16 @@ fun <T> List<T>.uniquePairs(): Sequence<Pair<T, T>> = sequence {
     }
 }
 
+fun <T> List<T>.pairs(): Sequence<Pair<T, T>> = sequence {
+    for (i in indices) {
+        for (j in indices) {
+            if (i != j) {
+                yield(get(i) to get(j))
+            }
+        }
+    }
+}
+
 fun <T> List<T>.uniqueTriples(): Sequence<Triple<T, T, T>> = sequence {
     for (i in 0..lastIndex) {
         for (j in i+1..lastIndex) {
@@ -131,6 +141,15 @@ fun Iterable<Long>.product(): Long {
     var product = 1L
     for (element in this) {
         product *= element
+    }
+    return product
+}
+
+fun <T> Iterable<T>.productOf(selector: (T) -> Long): Long {
+    if (!this.any()) return 0
+    var product = 1L
+    for (element in this) {
+        product *= selector(element)
     }
     return product
 }

@@ -30,7 +30,16 @@ class Day15(
         val start = Point2D(0, 0)
         val end = Point2D(caveMap.width - 1, caveMap.height - 1)
 
-        return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 1) }
+        return aStar(
+            start = start,
+            end = end,
+            costOfGettingToPoint = {
+                caveMap.riskForPoint(it, 1)
+            },
+            estimateToEnd = {
+                end.x - it.x + end.y - it.y
+            },
+        )
     }
 
     override fun solvePart2(): Int {
@@ -38,7 +47,16 @@ class Day15(
         val start = Point2D(0, 0)
         val end = Point2D(caveMap.width * 5 - 1, caveMap.height * 5 - 1)
 
-        return findLowestRiskPath(start, end) { caveMap.riskForPoint(it, 5) }
+        return aStar(
+            start = start,
+            end = end,
+            costOfGettingToPoint = {
+                caveMap.riskForPoint(it, 5)
+            },
+            estimateToEnd = {
+                end.x - it.x + end.y - it.y
+            },
+        )
     }
 
     /**
@@ -51,16 +69,13 @@ class Day15(
         start: Point2D,
         end: Point2D,
         riskForPoint: (Point2D) -> Int?,
+        estimateToEnd: (Point2D) -> Int,
     ): Int {
-        val queue = PriorityQueue<QueueEntry>(compareBy({ -(it.point.x + it.point.y) }, { it.risk }))
-        val visited = mutableMapOf<Point2D, Int>()
+        val queue = PriorityQueue<QueueEntry>(compareBy { it.risk + estimateToEnd(it.point) } )
         queue.add(QueueEntry(start, 0))
-        visited[start] = 0
-        var lowestPossibleRisk = Int.MAX_VALUE
 
         while (queue.isNotEmpty()) {
             val top = queue.poll()
-            if (top.risk >= lowestPossibleRisk) continue
             val next = top.point.neighbors().mapNotNull { point ->
                 riskForPoint(point)?.let { pointRisk ->
                     QueueEntry(point, top.risk + pointRisk)
@@ -68,20 +83,51 @@ class Day15(
             }
             next.forEach { nextEntry ->
                 if (nextEntry.point == end) {
-                    if (nextEntry.risk < lowestPossibleRisk) {
-                        lowestPossibleRisk = nextEntry.risk
-                    }
+                    return nextEntry.risk
                 } else {
-                    val prevRisk = visited[nextEntry.point]
-                    if (prevRisk == null || prevRisk > nextEntry.risk) {
+                    val prev = queue.firstOrNull { it.point == nextEntry.point }
+                    if (prev == null || prev.risk >= nextEntry.risk) {
+                        queue.removeIf { it.point == nextEntry.point }
                         queue.add(nextEntry)
-                        visited[nextEntry.point] = nextEntry.risk
                     }
                 }
             }
         }
 
-        return lowestPossibleRisk
+        return Int.MAX_VALUE
+    }
+
+    private fun aStar(
+        start: Point2D,
+        end: Point2D,
+        costOfGettingToPoint: (Point2D) -> Int?,
+        estimateToEnd: (Point2D) -> Int,
+    ): Int {
+        val gScore = mutableMapOf(start to 0)
+        val fScore = mutableMapOf(start to estimateToEnd(start))
+        val openSet = PriorityQueue<Point2D>(compareBy { fScore[it] ?: Int.MAX_VALUE })
+        openSet.add(start)
+
+        while (openSet.isNotEmpty()) {
+            val current = openSet.poll()
+            if (current == end) return gScore[end] ?: error("No gscore for end")
+            current.neighbors().forEach { neighbor ->
+                val cost = costOfGettingToPoint(neighbor)
+                if (cost != null) {
+                    val tentativeGScore = gScore[current]?.plus(cost) ?: Int.MAX_VALUE
+                    val currentGScore = gScore[neighbor] ?: Int.MAX_VALUE
+                    if (tentativeGScore < currentGScore) {
+                        gScore[neighbor] = tentativeGScore
+                        fScore[neighbor] = tentativeGScore + estimateToEnd(neighbor)
+                        if (neighbor !in openSet) {
+                            openSet.add(neighbor)
+                        }
+                    }
+                }
+            }
+        }
+
+        return Int.MAX_VALUE
     }
 
     private data class QueueEntry(

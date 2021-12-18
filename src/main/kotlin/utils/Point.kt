@@ -47,6 +47,10 @@ data class Point2D(val x: Int, val y: Int) {
         }
     }
 
+    operator fun plus(other: Point2D): Point2D {
+        return Point2D(x = x + other.x, y = y + other.y)
+    }
+
     companion object {
         val ORIGIN = Point2D(0, 0)
         val readerOrder: Comparator<Point2D> = Comparator { o1, o2 ->
