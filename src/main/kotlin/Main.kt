@@ -100,7 +100,7 @@ private fun testAll() {
     }
     Day19(getDayInputFile(19)!!.bufferedReader()).run {
         require(solvePart1() == 405)
-        require(solvePart2() == 2)
+        require(solvePart2() == 12306)
     }
 }
 

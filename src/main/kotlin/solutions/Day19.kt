@@ -59,17 +59,24 @@ class Day19(
         val alignments = mutableMapOf(
             0 to Alignment({it}, Point3D(0, 0, 0))
         )
+        val allScannerIds = input.map { it.id }
+        val possibleAlignments = notYetAligned.map { it.id }.associateWith { id -> allScannerIds.toMutableSet().also { it.remove(id) } }
 
         outer@ while (notYetAligned.isNotEmpty()) {
             for (i in notYetAligned.indices) {
                 val toAlign = notYetAligned[i]
-                val alignment = findAlignment(alignedWithFirst, toAlign)
+                val alignment = findAlignment(
+                    aligned = alignedWithFirst.filter { it.id in possibleAlignments.getOrElse(toAlign.id) { emptySet() } },
+                    toAlign = toAlign,
+                )
                 if (alignment != null) {
                     println("Found alignment for ${toAlign.id}")
                     notYetAligned.removeAt(i)
                     alignedWithFirst.add(toAlign.align(alignment))
                     alignments[toAlign.id] = alignment
                     continue@outer
+                } else {
+                    possibleAlignments[toAlign.id]?.removeAll(alignedWithFirst.map { it.id })
                 }
             }
             error("cannot find new alignment")
