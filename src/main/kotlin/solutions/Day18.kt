@@ -1,7 +1,6 @@
 package solutions
 
 import utils.pairs
-import utils.uniquePairs
 import java.io.BufferedReader
 
 class Day18(
@@ -13,8 +12,9 @@ class Day18(
     }
 
     override fun solvePart1(): Int {
-        val sum = input.reduce { a, b -> (a + b).reduced() }
-        return sum.magnitude()
+        return input.reduce { a, b ->
+            (a + b).reduced()
+        }.magnitude()
     }
 
     override fun solvePart2(): Int {
@@ -28,101 +28,79 @@ class Day18(
         var parent: Pair? = null
             protected set
 
-        val depth: Int
-            get() {
-                var d = 0
-                var p = parent
-                while (p != null) {
-                    d++
-                    p = p.parent
-                }
-                return d
-            }
+        val depth: Int get() = pathToRoot().count()
+
+        abstract fun magnitude(): Int
 
         fun copy(): SnailfishNumber {
             return when (this) {
                 is Regular -> Regular(this.value)
-                is Pair -> {
-                    val left = this.left.copy()
-                    val right = this.right.copy()
-                    val top = Pair(left, right)
-                    left.parent = top
-                    right.parent = top
-                    top
-                }
+                is Pair -> createPair(
+                    left = this.left.copy(),
+                    right = this.right.copy(),
+                )
             }
         }
 
         operator fun plus(other: SnailfishNumber): SnailfishNumber {
-            val left = this.copy()
-            val right = other.copy()
-            val newTop = Pair(
-                left = left,
-                right = right,
+            return createPair(
+                left = this.copy(),
+                right = other.copy(),
             )
-            left.parent = newTop
-            right.parent = newTop
-            return newTop
         }
 
         fun reduced(): SnailfishNumber {
             val reduced = this.copy()
 
-            while (true) {
-                val toExplode = reduced.firstToExplode()
-                if (toExplode != null) {
-                    val left = toExplode.left as? Regular
-                        ?: error("Exploding pairs have to consist of two regular numbers.")
-                    val right = toExplode.right as? Regular
-                        ?: error("Exploding pairs have to consist of two regular numbers.")
-
-                    toExplode.prevRegular()?.let { prevRegular ->
-                        if (prevRegular.parent!!.left == prevRegular) {
-                            prevRegular.parent!!.left = Regular(prevRegular.value + left.value).also { it.parent = prevRegular.parent }
-                        }
-                        if (prevRegular.parent!!.right == prevRegular) {
-                            prevRegular.parent!!.right = Regular(prevRegular.value + left.value).also { it.parent = prevRegular.parent }
-                        }
-                    }
-
-                    toExplode.nextRegular()?.let { nextRegular ->
-                        if (nextRegular.parent!!.left == nextRegular) {
-                            nextRegular.parent!!.left = Regular(nextRegular.value + right.value).also { it.parent = nextRegular.parent }
-                        }
-                        if (nextRegular.parent!!.right == nextRegular) {
-                            nextRegular.parent!!.right = Regular(nextRegular.value + right.value).also { it.parent = nextRegular.parent }
-                        }
-                    }
-
-                    if (toExplode.parent!!.left == toExplode) {
-                        toExplode.parent!!.left = Regular(0).also { it.parent = toExplode.parent }
-                    }
-                    if (toExplode.parent!!.right == toExplode) {
-                        toExplode.parent!!.right = Regular(0).also { it.parent = toExplode.parent }
-                    }
-                    continue
-                }
-                val toSplit = reduced.firstToSplit()
-                if (toSplit != null) {
-                    val newNode = Pair(
-                        left = Regular(toSplit.value / 2),
-                        right = Regular((toSplit.value + 1) / 2),
-                    )
-                    newNode.left.parent = newNode
-                    newNode.right.parent = newNode
-                    newNode.parent = toSplit.parent
-                    if (toSplit.parent!!.left == toSplit) {
-                        toSplit.parent!!.left = newNode
-                    }
-                    if (toSplit.parent!!.right == toSplit) {
-                        toSplit.parent!!.right = newNode
-                    }
-                    continue
-                }
-                break
-            }
+            while (reduced.explode() || reduced.split()) Unit
 
             return reduced
+        }
+
+        private fun explode(): Boolean {
+            val toExplode = inOrder()
+                .filterIsInstance<Pair>()
+                .firstOrNull { it.depth >= 4 } ?: return false
+
+            val left = toExplode.left as? Regular
+                ?: error("Exploding pairs have to consist of two regular numbers.")
+            val right = toExplode.right as? Regular
+                ?: error("Exploding pairs have to consist of two regular numbers.")
+
+            toExplode.prevRegular()?.apply {
+                replaceWith(Regular(value + left.value))
+            }
+
+            toExplode.nextRegular()?.apply {
+                replaceWith(Regular(value + right.value))
+            }
+
+            toExplode.replaceWith(Regular(0))
+
+            return true
+        }
+
+        private fun split(): Boolean {
+            val toSplit = inOrder()
+                .filterIsInstance<Regular>()
+                .firstOrNull { it.value > 9 } ?: return false
+
+            toSplit.replaceWith(
+                createPair(
+                    left = Regular(toSplit.value / 2),
+                    right = Regular((toSplit.value + 1) / 2),
+                )
+            )
+
+            return true
+        }
+
+        protected fun replaceWith(new: SnailfishNumber) {
+            val parent = parent ?: return
+            if (parent.left == this) parent.left = new
+            if (parent.right == this) parent.right = new
+            new.parent = parent
+            this.parent = null
         }
 
         fun inOrder(): Sequence<SnailfishNumber> = sequence {
@@ -136,15 +114,7 @@ class Day18(
             }
         }
 
-        abstract fun magnitude(): Int
-
-        private fun firstToExplode(): Pair? {
-            return inOrder().filterIsInstance<Pair>().firstOrNull { it.depth >= 4 }
-        }
-
-        private fun firstToSplit(): Regular? {
-            return inOrder().filterIsInstance<Regular>().firstOrNull { it.value > 9 }
-        }
+        fun pathToRoot(): Sequence<SnailfishNumber> = generateSequence(parent) { it.parent }
 
         protected fun prevRegular(): Regular? {
             var current: SnailfishNumber? = this
@@ -221,39 +191,41 @@ class Day18(
                 require(string.last() == ']')
                 val splits = string.drop(1).dropLast(1).splitOnFreeComma()
                 require(splits.size == 2)
-                val left = fromString(splits[0])
-                val right = fromString(splits[1])
-                val top = Pair(
-                    left = left,
-                    right = right,
+                return createPair(
+                    left = fromString(splits[0]),
+                    right = fromString(splits[1]),
                 )
-                left.parent = top
-                right.parent = top
-                return top
+            }
+
+            fun createPair(
+                left: SnailfishNumber,
+                right: SnailfishNumber,
+            ): Pair {
+                return Pair(left, right).also {
+                    left.parent = it
+                    right.parent = it
+                }
             }
 
             private fun String.splitOnFreeComma(): List<String> {
                 var bracketCount = 0
+                var prevSplit = -1
+                val list = mutableListOf<String>()
 
                 forEachIndexed { index, c ->
-                    when (c) {
-                        '[' -> bracketCount += 1
-                        ']' -> bracketCount -= 1
-                        ',' -> {
-                            if (bracketCount == 0) {
-                                return listOf(
-                                    substring(
-                                        0,
-                                        index
-                                    )
-                                ) + substring(index + 1).splitOnFreeComma()
-                            }
+                    when {
+                        c == '[' -> bracketCount += 1
+                        c == ']' -> bracketCount -= 1
+                        c == ',' && bracketCount == 0 -> {
+                            list.add(substring(prevSplit + 1, index))
+                            prevSplit = index
                         }
-                        else -> Unit
                     }
                 }
 
-                return listOf(this)
+                list.add(substring(prevSplit + 1))
+
+                return list
             }
         }
     }
