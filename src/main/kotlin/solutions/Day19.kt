@@ -70,7 +70,6 @@ class Day19(
                     toAlign = toAlign,
                 )
                 if (alignment != null) {
-                    println("Found alignment for ${toAlign.id}")
                     notYetAligned.removeAt(i)
                     alignedWithFirst.add(toAlign.align(alignment))
                     alignments[toAlign.id] = alignment

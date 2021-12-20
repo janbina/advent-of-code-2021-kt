@@ -5,7 +5,7 @@ import java.io.BufferedReader
 
 class Day13(
     inputReader: BufferedReader,
-): Day<Int, Int>() {
+): Day<Int, Day13.Paper>() {
 
     private val input: Input by lazy {
         val dots = mutableSetOf<Point2D>()
@@ -31,13 +31,12 @@ class Day13(
             .size
     }
 
-    override fun solvePart2(): Int {
+    override fun solvePart2(): Paper {
         val foldedPaper = input.folds
             .fold(input.dots) { dots, fold ->
                 dots.foldPaper(fold)
             }
-        printPaper(foldedPaper)
-        return 0
+        return Paper(foldedPaper)
     }
 
     private fun Set<Point2D>.foldPaper(fold: Fold): Set<Point2D> {
@@ -63,21 +62,6 @@ class Day13(
         return newPoints
     }
 
-    private fun printPaper(dots: Set<Point2D>) {
-        val maxX = dots.maxOf { it.x }
-        val maxY = dots.maxOf { it.y }
-        for (y in 0..maxY) {
-            for (x in 0.. maxX) {
-                if (Point2D(x, y) in dots) {
-                    print('X')
-                } else {
-                    print(' ')
-                }
-            }
-            println()
-        }
-    }
-
     private class Input(
         val dots: Set<Point2D>,
         val folds: List<Fold>,
@@ -86,5 +70,26 @@ class Day13(
     private sealed class Fold {
         class Vertical(val y: Int): Fold()
         class Horizontal(val x: Int): Fold()
+    }
+
+    class Paper(
+        private val dots: Set<Point2D>,
+    ) {
+        override fun toString(): String = buildString {
+            val maxX = dots.maxOf { it.x }
+            val maxY = dots.maxOf { it.y }
+
+            appendLine()
+            for (y in 0..maxY) {
+                for (x in 0..maxX) {
+                    if (Point2D(x, y) in dots) {
+                        append('█')
+                    } else {
+                        append('░')
+                    }
+                }
+                appendLine()
+            }
+        }
     }
 }

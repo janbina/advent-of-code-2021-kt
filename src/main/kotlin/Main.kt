@@ -76,7 +76,7 @@ private fun testAll() {
     }
     Day13(getDayInputFile(13)!!.bufferedReader()).run {
         require(solvePart1() == 708)
-        require(solvePart2() == 0)
+        // require(solvePart2() == 0) result has to be read be human :/
     }
     Day14(getDayInputFile(14)!!.bufferedReader()).run {
         require(solvePart1() == 3831L)
@@ -98,6 +98,7 @@ private fun testAll() {
         require(solvePart1() == 4235)
         require(solvePart2() == 4659)
     }
+//    Too slow for now
 //    Day19(getDayInputFile(19)!!.bufferedReader()).run {
 //        require(solvePart1() == 405)
 //        require(solvePart2() == 12306)
