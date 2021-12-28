@@ -174,3 +174,25 @@ fun Sequence<Long>.product(): Long {
     }
     return product
 }
+
+fun <K, V> Map<K, V>.sumOf(mapper: (Map.Entry<K, V>) -> Int): Int {
+    var sum = 0
+    forEach { sum += mapper(it) }
+    return sum
+}
+
+fun <T> Array<T>.getCyclic(index: Int): T {
+    return get(index % size)
+}
+
+fun <T> Array<Array<T>>.getCyclic(row: Int, col: Int): T {
+    return getCyclic(row).getCyclic(col)
+}
+
+fun <T> Array<T>.setCyclic(index: Int, value: T) {
+    set(index % size, value)
+}
+
+fun <T> Array<Array<T>>.setCyclic(row: Int, col: Int, value: T) {
+    getCyclic(row).setCyclic(col, value)
+}

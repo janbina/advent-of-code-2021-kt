@@ -5,7 +5,7 @@ import java.util.*
 fun <Node> aStarSearch(
     start: Node,
     end: Node,
-    next: (Node) -> List<Pair<Node, Int>>,
+    next: (Node) -> Iterable<Pair<Node, Int>>,
     heuristicCostToEnd: (Node) -> Int,
 ): AStarResult<Node>? {
 
